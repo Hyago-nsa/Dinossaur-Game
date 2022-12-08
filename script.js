@@ -2,12 +2,19 @@ import { setupGround, updateGround } from "./ground.js";
 
 const WORLD_WIDTH = 100;
 const WORLD_HEIGHT = 30;
+const SPEED_SCALE_INCREASE = 0.00002;
+
 const worldElem = document.querySelector("[data-world]");
+const scoreElem = document.querySelector("[data-score]");
+
+document.addEventListener("keydown", handleStart, { once: true });
+window.addEventListener("resize", setPixelToWorldScale);
 
 setPixelToWorldScale();
-setupGround();
 
 let lastTime;
+let speedScale;
+let score;
 
 function setPixelToWorldScale() {
   let worldToPixelScale;
@@ -20,6 +27,7 @@ function setPixelToWorldScale() {
   worldElem.style.width = `${WORLD_WIDTH * worldToPixelScale}px`;
   worldElem.style.height = `${WORLD_HEIGHT * worldToPixelScale}px`;
 }
+
 function update(time) {
   if (lastTime == null) {
     lastTime = time;
@@ -30,10 +38,27 @@ function update(time) {
   const delta = time - lastTime;
   lastTime = time;
 
-  updateGround(delta, 1);
+  updateGround(delta, speedScale);
+  updateSpeedScale(delta);
+  updateScore(delta);
 
   window.requestAnimationFrame(update);
 }
 
-window.addEventListener("resize", setPixelToWorldScale);
-window.requestAnimationFrame(update);
+function updateSpeedScale(delta) {
+  speedScale += delta * SPEED_SCALE_INCREASE;
+}
+
+function updateScore(delta) {
+  score += delta * 0.01;
+  scoreElem.textContent = Math.floor(score);
+}
+
+function handleStart() {
+  setupGround();
+
+  lastTime = null;
+  speedScale = 1;
+  score = 0;
+  window.requestAnimationFrame(update);
+}
