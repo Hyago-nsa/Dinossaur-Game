@@ -1,11 +1,14 @@
 import { setupGround, updateGround } from "./ground.js";
+import { setupDino, updateDino, getDinoRects, setDinoLose } from "./dino.js";
+import { setupCactus, updateCactus, getCactusRects } from "./cactus.js";
 
 const WORLD_WIDTH = 100;
 const WORLD_HEIGHT = 30;
-const SPEED_SCALE_INCREASE = 0.00002;
+const SPEED_SCALE_INCREASE = 0.00001;
 
 const worldElem = document.querySelector("[data-world]");
 const scoreElem = document.querySelector("[data-score]");
+const starScreenElem = document.querySelector("[data-start-screen]");
 
 document.addEventListener("keydown", handleStart, { once: true });
 window.addEventListener("resize", setPixelToWorldScale);
@@ -15,6 +18,20 @@ setPixelToWorldScale();
 let lastTime;
 let speedScale;
 let score;
+
+function checkLose() {
+  const dinoRect = getDinoRects();
+  return getCactusRects().some((rect) => isCollision(rect, dinoRect));
+}
+
+function isCollision(rect1, rect2) {
+  return (
+    rect1.left < rect2.right &&
+    rect1.top < rect2.bottom &&
+    rect1.right > rect2.left &&
+    rect1.bottom > rect2.top
+  );
+}
 
 function setPixelToWorldScale() {
   let worldToPixelScale;
@@ -39,8 +56,11 @@ function update(time) {
   lastTime = time;
 
   updateGround(delta, speedScale);
+  updateDino(delta, speedScale);
+  updateCactus(delta, speedScale);
   updateSpeedScale(delta);
   updateScore(delta);
+  if (checkLose()) return handleLose()
 
   window.requestAnimationFrame(update);
 }
@@ -56,9 +76,21 @@ function updateScore(delta) {
 
 function handleStart() {
   setupGround();
+  setupDino();
+  setupCactus();
 
   lastTime = null;
   speedScale = 1;
   score = 0;
+
+  starScreenElem.classList.add("hide");
   window.requestAnimationFrame(update);
+}
+
+function handleLose(){
+  setDinoLose()
+  setTimeout(() => {
+    document.addEventListener("keydown", handleStart, {once:true})
+    starScreenElem.classList.remove("hide");
+  }, (100));
 }
